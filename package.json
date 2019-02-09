@@ -12,6 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "productionURL": "https://shmxi4lry7.execute-api.us-west-2.amazonaws.com/production",
   "dependencies": {
     "@architect/architect": "^5.5.0",
     "aws-config": "^1.2.0",

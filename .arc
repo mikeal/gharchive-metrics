@@ -1,5 +1,5 @@
 @app
-testapp
+ghmetrics
 
 @http
 get /
