@@ -19,16 +19,56 @@ const prime = async argv => {
 const query = async function * (s3, reader, sql) {
   for await (let file of reader) {
     log(file)
-    let q = await s3.query(sql, `gharchive/${file}`)
-    yield * q
+    yield s3.query(sql, `gharchive/${file}`)
+  }
+}
+
+const mkQuery = async function * (argv) {
+  let s3 = createS3(argv.profile)
+  let reader = range(argv, () => {})
+
+
+  let running = new Set()
+
+  // let iter = query(s3, reader, argv.sql)[Symbol.asyncIterator]()
+  let iter = reader[Symbol.asyncIterator]()
+  for (let i = 0; i < argv.parallelism; i++) {
+    let p = iter.next()
+    p.then(file => {
+      running.delete(p)
+      let p = s3.query(argv.sql, `gharchive/${file}`)
+      p.then(lines => {
+        running.delete(p)
+        // this is where I left it
+    })
+    running.add(p)
+  }
+
+  while (running.length) {
+    let {value, done} = await Promise.race(Array.from(running))
+    if (!done) {
+      if (value[Symbol.asyncIterator]) {
+        let iter = value[Symbol.asyncIterator]()
+        let p = iter.next()
+        let _ = p => {
+          p.then(obj => {
+            let {value, done} = obj
+            running.delete(p)
+            if (!done) _(iter.next())
+          })
+          running.add(p)
+        }
+        _(p)
+      } else {
+        yield value
+      }
+    }
   }
 }
 
 const runQuery = async argv => {
-  let s3 = createS3(argv.profile)
-  let reader = range(argv, () => {})
-  for await (let obj of query(s3, reader, argv.sql)) {
-    // console.log(obj)
+  for await (let line of mkQuery(argv)) {
+    console.log(line)
   }
 }
 
