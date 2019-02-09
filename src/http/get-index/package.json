@@ -1,0 +1,14 @@
+{
+  "name": "testapp-get-index",
+  "dependencies": {
+    "@architect/data": "^2.0.13",
+    "@architect/functions": "^2.0.4",
+    "aws-config": "^1.2.0",
+    "aws-sdk": "^2.400.0",
+    "bent": "^1.2.0",
+    "jsonstream2": "^2.0.1",
+    "s3-download-stream": "^1.1.1",
+    "s3-stream-upload": "^2.0.2",
+    "yargs": "^12.0.5"
+  }
+}

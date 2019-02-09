@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@architect/architect": "^5.5.0",
     "aws-config": "^1.2.0",
     "aws-sdk": "^2.393.0",
     "bent": "^1.2.0",
