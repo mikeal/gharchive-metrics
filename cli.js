@@ -2,6 +2,7 @@ const ghTimerange = require('./lib/gh-timerange')
 const pkg = require('./package.json')       
 const log = require('single-line-log').stdout
 const createS3 = require('./lib/s3')
+const mkfilter = require('./lib/mkfilter')
 
 const range = (argv, log) => {
   let [start, end] = argv.timerange.split(':')
@@ -119,6 +120,27 @@ require('yargs')
     },
     desc: 'Queries a range of gharchive tarballs',
     handler: runQuery
+  })
+  .command({
+    command: 'mkfilter <profile>',
+    builder: yargs => {
+      yargs.option('orgs', {
+        desc: 'Comma delimited list of orgs to filter on'
+      })
+      yargs.option('repos', {
+        desc: 'Comma delimited list of repos to filter on'
+      })
+      yargs.positional('profile', {
+        required: true,
+        desc: 'AWS profile name'
+      })
+    },
+    desc: 'Creates and stores CBOR node for filter parameters',
+    handler: async argv => {
+      let d = key => argv[key] ? argv[key].split(',') : []
+      let block = await mkfilter(d('orgs'), d('repos'), argv.profile)
+      console.log(block.cid.toBaseEncodedString())
+    }
   })
   .argv
 

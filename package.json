@@ -18,6 +18,7 @@
     "aws-config": "^1.2.0",
     "aws-sdk": "^2.393.0",
     "bent": "^1.2.0",
+    "dag-cbor-sync": "^0.6.0",
     "jsonstream2": "^1.1.2",
     "mergeiterator": "^1.1.8",
     "s3-download-stream": "^1.1.1",
