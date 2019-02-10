@@ -1,5 +1,5 @@
 {
-  "name": "ghmetrics-get-index",
+  "name": "ghmetrics-get-filter",
   "dependencies": {
     "@architect/data": "^2.0.14",
     "@architect/functions": "^2.0.7"

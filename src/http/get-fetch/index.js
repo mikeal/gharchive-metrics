@@ -2,11 +2,20 @@
 // let arc = require('@architect/functions')
 // let url = arc.http.helpers.url
 
+let gharchive = require('./lib/gharchive')
+
+let json = obj => JSON.stringify(obj, null, 2)
+
 exports.handler = async function http(req) {
-  console.log(req)
+  let type = 'text/html; charset=utf8'
+  let file = req.query.file
+  if (!file) {
+    return {type, body: '<h1>Wrong params :(</h1>'}
+  }
+  let stored = await gharchive(file)
   return {
-    type: 'text/html; charset=utf8',
-    body: `<pre>${JSON.stringify(req.headers, null, 2)}</pre>`
+    type: 'application/json',
+    body: json({file, stored})
   }
 }
 
