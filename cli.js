@@ -33,37 +33,46 @@ const mkQuery = async function * (argv) {
   // let iter = query(s3, reader, argv.sql)[Symbol.asyncIterator]()
   let iter = reader[Symbol.asyncIterator]()
   for (let i = 0; i < argv.parallelism; i++) {
-    let p = iter.next()
-    p.then(file => {
-      running.delete(p)
-      let p = s3.query(argv.sql, `gharchive/${file}`)
-      p.then(lines => {
+    let _run = () => {
+      let p = iter.next()
+      p.then(obj => {
+        let {value, done} = obj
+        let file = value
         running.delete(p)
-        // this is where I left it
-    })
-    running.add(p)
+        let qp = s3.query(argv.sql, `gharchive/${file}`)
+        qp.then(lines => {
+          lines = lines[Symbol.asyncIterator]()
+          running.delete(qp)
+          let __run = () => {
+            let p = lines.next()
+            p.then(obj => {
+             let {value, done} = obj
+             running.delete(p)
+              if (done) {
+                _run()
+              } else { 
+                __run()
+              }
+            })
+            running.add(p)
+          }
+          __run()
+        })
+        running.add(qp)
+      })
+      running.add(p)
+    }
+    _run()
   }
 
-  while (running.length) {
+  while (running.size) {
     let {value, done} = await Promise.race(Array.from(running))
-    if (!done) {
-      if (value[Symbol.asyncIterator]) {
-        let iter = value[Symbol.asyncIterator]()
-        let p = iter.next()
-        let _ = p => {
-          p.then(obj => {
-            let {value, done} = obj
-            running.delete(p)
-            if (!done) _(iter.next())
-          })
-          running.add(p)
-        }
-        _(p)
-      } else {
-        yield value
-      }
+    if (value && typeof value === 'object') {
+      yield value
     }
   }
+  console.error('while finished')
+  process.exit()
 }
 
 const runQuery = async argv => {
