@@ -3,78 +3,26 @@ const pkg = require('./package.json')
 const log = require('single-line-log').stdout
 const createS3 = require('./lib/s3')
 const mkfilter = require('./lib/mkfilter')
-
-const range = (argv, log) => {
-  let [start, end] = argv.timerange.split(':')
-  let reader = ghTimerange(start, end, argv.url, argv.parallelism, log)
-  return reader
-}
+const filter = require('./lib/filter')
+const mkQuery = require('./lib/query')
+const range = mkQuery.range
 
 const prime = async argv => {
-  let reader = range(argv, log)
+  let reader = range(argv.timerange, argv.url, argv.parallelism, log)
   for await (let file of reader) {
     log(`cached ${file}`)
   }
 }
 
-const query = async function * (s3, reader, sql) {
-  for await (let file of reader) {
-    log(file)
-    yield s3.query(sql, `gharchive/${file}`)
-  }
-}
-
-const mkQuery = async function * (argv) {
-  let s3 = createS3(argv.profile)
-  let reader = range(argv, () => {})
-  let running = new Set()
-
-  let iter = reader[Symbol.asyncIterator]()
-  for (let i = 0; i < argv.parallelism; i++) {
-    let _run = () => {
-      let p = iter.next()
-      p.then(obj => {
-        let {value, done} = obj
-        let file = value
-        running.delete(p)
-        let qp = s3.query(argv.sql, `gharchive/${file}`)
-        qp.then(lines => {
-          lines = lines[Symbol.asyncIterator]()
-          running.delete(qp)
-          let __run = () => {
-            let p = lines.next()
-            p.then(obj => {
-             let {value, done} = obj
-             running.delete(p)
-              if (done) {
-                _run()
-              } else { 
-                __run()
-              }
-            })
-            running.add(p)
-          }
-          __run()
-        })
-        running.add(qp)
-      })
-      running.add(p)
-    }
-    _run()
-  }
-
-  while (running.size) {
-    let {value, done} = await Promise.race(Array.from(running))
-    if (value && typeof value === 'object') {
-      yield value
-    }
-  }
-}
-
 const runQuery = async argv => {
-  for await (let line of mkQuery(argv)) {
+  let iter = mkQuery(argv.profile, argv.sql, argv.timerange, argv.url, argv.parallelism)
+  for await (let line of iter) {
     console.log(line)
   }
+}
+
+const runFilter = async argv => {
+  filter(argv.profile, argv.sql, argv.timerange, argv.url, argv.parallelism, argv.filter)
 }
 
 const timerangeOptions = yargs => {
@@ -86,6 +34,22 @@ const timerangeOptions = yargs => {
     desc: 'Cache service URL',
     default: pkg.productionURL
   })
+}
+
+const queryOptions = yargs => {
+  yargs.positional('timerange', {
+    desc: 'Timerange in format: 2019-01-01:2019-01-02',
+    required: true
+  })
+  yargs.positional('sql', {
+    desc: 'SQL Query for S3 select',
+    required: true
+  })
+  yargs.positional('profile', {
+    required: true,
+    desc: 'AWS profile name'
+  })
+  timerangeOptions(yargs)
 }
 
 require('yargs')
@@ -104,22 +68,21 @@ require('yargs')
   .command({
     command: 'query <timerange> <sql> <profile>',
     builder: yargs => {
-      yargs.positional('timerange', {
-        desc: 'Timerange in format: 2019-01-01:2019-01-02',
-        required: true
-      })
-      yargs.positional('sql', {
-        desc: 'SQL Query for S3 select',
-        required: true
-      })
-      yargs.positional('profile', {
-        required: true,
-        desc: 'AWS profile name'
-      })
-      timerangeOptions(yargs)
+      queryOptions(yargs)
     },
     desc: 'Queries a range of gharchive tarballs',
     handler: runQuery
+  })
+  .command({
+    command: 'filter <timerange> <sql> <profile> <filter>',
+    builder: yargs => {
+      queryOptions(yargs)
+      yargs.positional('filter', {
+        desc: 'Hash of of the filter options, created with mkfilter'
+      })
+    },
+    desc: 'Filters the given query by set repo filter params',
+    handler: argv => runFilter(argv)
   })
   .command({
     command: 'mkfilter <profile>',
