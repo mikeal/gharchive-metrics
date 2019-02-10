@@ -26,11 +26,8 @@ const query = async function * (s3, reader, sql) {
 const mkQuery = async function * (argv) {
   let s3 = createS3(argv.profile)
   let reader = range(argv, () => {})
-
-
   let running = new Set()
 
-  // let iter = query(s3, reader, argv.sql)[Symbol.asyncIterator]()
   let iter = reader[Symbol.asyncIterator]()
   for (let i = 0; i < argv.parallelism; i++) {
     let _run = () => {
@@ -71,8 +68,6 @@ const mkQuery = async function * (argv) {
       yield value
     }
   }
-  console.error('while finished')
-  process.exit()
 }
 
 const runQuery = async argv => {
@@ -84,7 +79,7 @@ const runQuery = async argv => {
 const timerangeOptions = yargs => {
   yargs.option('parallelism', {
     desc: 'Max number of concurrent requests',
-    default: 100
+    default: 20
   })
   yargs.option('url', {
     desc: 'Cache service URL',
