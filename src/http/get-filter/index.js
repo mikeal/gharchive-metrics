@@ -2,7 +2,7 @@
 // let arc = require('@architect/functions')
 // let url = arc.http.helpers.url
 
-const filter = require('./lib/filter')
+const filter = require('@architect/shared/s3')
 
 exports.handler = async function http(req) {
   console.log(req)
