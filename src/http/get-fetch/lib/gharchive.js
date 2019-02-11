@@ -1,4 +1,4 @@
-const createS3 = require('./s3')
+const createS3 = require('@architect/shared/s3')
 const bent = require('bent')
 const url = require('url')
 const querystring = require('querystring')
@@ -8,12 +8,12 @@ const getFile = bent('http://data.gharchive.org/', {
   'User-Agent': 'gharchive-metrics-' + Math.random()
 })
 
-// TODO: Move gharchive fetch to lambda function
 module.exports = async (file, ...args) => {
   const path = `gharchive/${file}`
   const s3 = createS3(...args)
-  if (await s3.hasObject(path)) {
-    return true
+  let _has = await s3.hasObject(path)
+  if (_has) {
+    return _has
   } else {
     let f
     try {

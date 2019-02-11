@@ -23,9 +23,9 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
 
   const hasObject = key => {
     return new Promise((resolve, reject) => {
-      s3.headObject({Bucket, Key: key}, (err, bool) => {
+      s3.headObject({Bucket, Key: key}, function (err, bool) {
         if (err) return resolve(false)
-        resolve(bool)
+        resolve(bool ? {size: parseInt(this.httpResponse.headers['content-length']) : bool)
       })
     })
   }
