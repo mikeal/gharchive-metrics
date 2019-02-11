@@ -2,11 +2,17 @@
 // let arc = require('@architect/functions')
 // let url = arc.http.helpers.url
 
+const filter = require('./lib/filter')
+
 exports.handler = async function http(req) {
   console.log(req)
+  let proto = req.headers['X-Forwarded-Proto']
+  let host = req.headers.Host
+  let env = process.env.NODE_ENV
+  let url = `${proto}://${host}/${env}`
   return {
     type: 'text/html; charset=utf8',
-    body: `<pre>${JSON.stringify(req.query, null, 2)}</pre>`
+    body: `<pre>${JSON.stringify({url}, null, 2)}</pre>`
   }
 }
 
