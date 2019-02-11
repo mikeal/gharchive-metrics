@@ -2,6 +2,7 @@
   "name": "ghmetrics-get-filter",
   "dependencies": {
     "@architect/data": "^2.0.14",
-    "@architect/functions": "^2.0.7"
+    "@architect/functions": "^2.0.7",
+    "dag-cbor-sync": "^0.6.0"
   }
 }
