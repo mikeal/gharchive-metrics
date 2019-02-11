@@ -22,7 +22,7 @@ const runQuery = async argv => {
 }
 
 const runFilter = async argv => {
-  filter(argv.profile, argv.sql, argv.timerange, argv.url, argv.parallelism, argv.filter)
+  filter(argv.profile, argv.timerange, argv.url, argv.parallelism, argv.filter)
 }
 
 const timerangeOptions = yargs => {
@@ -74,7 +74,7 @@ require('yargs')
     handler: runQuery
   })
   .command({
-    command: 'filter <timerange> <sql> <profile> <filter>',
+    command: 'filter <timerange> <profile> <filter>',
     builder: yargs => {
       queryOptions(yargs)
       yargs.positional('filter', {
@@ -87,6 +87,9 @@ require('yargs')
   .command({
     command: 'mkfilter <profile>',
     builder: yargs => {
+      yargs.option('keys', {
+        desc: 'Command delimited list of keys to include in filtered object'
+      })
       yargs.option('orgs', {
         desc: 'Comma delimited list of orgs to filter on'
       })
@@ -101,7 +104,7 @@ require('yargs')
     desc: 'Creates and stores CBOR node for filter parameters',
     handler: async argv => {
       let d = key => argv[key] ? argv[key].split(',') : []
-      let block = await mkfilter(d('orgs'), d('repos'), argv.profile)
+      let block = await mkfilter(d('keys'), d('orgs'), d('repos'), argv.profile)
       console.log(block.cid.toBaseEncodedString())
     }
   })
