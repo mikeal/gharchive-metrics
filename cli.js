@@ -5,6 +5,7 @@ const createS3 = require('./src/shared/s3')
 const mkfilter = require('./lib/mkfilter')
 const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
+const pull = require('./lib/pull')
 const range = mkQuery.range
 
 const prime = async argv => {
@@ -106,6 +107,23 @@ require('yargs')
       let d = key => argv[key] ? argv[key].split(',') : []
       let block = await mkfilter(d('keys'), d('orgs'), d('repos'), argv.profile)
       console.log(block.cid.toBaseEncodedString())
+    }
+  })
+  .command({
+    command: 'pull <timerange> <profile> <filter> <outputDir>',
+    handler: async argv => {
+      pull(argv.timerange, argv.url, argv.filter, argv.profile, argv.parallelism, argv.outputDir)
+    },
+    builder: yargs => {
+      queryOptions(yargs)
+      yargs.positional('filter', {
+        desc: 'Hash of of the filter options, created with mkfilter',
+        required: true
+      })
+      yargs.positional('outputDir', {
+        desc: 'Directory to write filtered activity.',
+        required: true
+      })
     }
   })
   .argv
