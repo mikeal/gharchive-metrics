@@ -1,7 +1,5 @@
-const ghTimerange = require('./lib/gh-timerange')
-const pkg = require('./package.json')       
+const pkg = require('./package.json')
 const log = require('single-line-log').stdout
-const createS3 = require('./src/shared/s3')
 const mkfilter = require('./lib/mkfilter')
 const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
@@ -53,7 +51,7 @@ const queryOptions = yargs => {
   timerangeOptions(yargs)
 }
 
-require('yargs')
+require('yargs') // eslint-disable-line
   .command({
     command: 'prime [timerange]',
     builder: yargs => {
@@ -127,4 +125,3 @@ require('yargs')
     }
   })
   .argv
-

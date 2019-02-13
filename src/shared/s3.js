@@ -92,15 +92,18 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
     return new Promise((resolve, reject) => {
       s3.selectObjectContent(params, (err, data) => {
         if (err) return reject(err)
-        let ret = data.Payload
+        let _transport = data.Payload
         .pipe(new Transform({
           transform(chunk, encoding, callback) {
             callback(null, chunk.Records ? chunk.Records.Payload : undefined)
           },
           objectMode: true
         }))
+        let ret = _transport
         .pipe(jsonstream.parse())
         .pipe(new PassThrough({objectMode: true}))
+
+        _transport.on('error', err => ret.emit('error', err))
 
         resolve(ret)
       })
