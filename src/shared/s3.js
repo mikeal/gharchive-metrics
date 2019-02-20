@@ -4,6 +4,8 @@ const jsonstream = require('jsonstream2')
 const awsConfig = require('aws-config')
 const UploadStream = require('s3-stream-upload')
 const downloader = require('s3-download-stream')
+const RecursiveIterator = require('recursive-iterator')
+const recursive = arg => new RecursiveIterator(arg)
 
 const { promisify } = require('util')
 
@@ -99,12 +101,14 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
           },
           objectMode: true
         }))
-        let ret = _transport
-        .pipe(jsonstream.parse())
-        .pipe(new PassThrough({objectMode: true}))
-
-        _transport.on('error', err => ret.emit('error', err))
-
+        let ret = new PassThrough({objectMode: true})
+        
+        for (let { node } of recursive(data)) {
+          if (node && typeof node.on === 'function') {
+            node.on('error', err => ret.emit('error'))
+          }
+        }
+        _transport.pipe(jsonstream.parse()).pipe(ret)
         resolve(ret)
       })
     })

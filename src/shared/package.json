@@ -15,6 +15,7 @@
     "bent": "^5.0.0",
     "dag-cbor-sync": "^0.6.0",
     "jsonstream2": "^2.0.1",
+    "recursive-iterator": "^3.3.0",
     "s3-download-stream": "^1.1.1",
     "s3-stream-upload": "^2.0.2"
   }
