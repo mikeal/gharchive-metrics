@@ -109,6 +109,7 @@ require('yargs') // eslint-disable-line
   })
   .command({
     command: 'pull <timerange> <profile> <filter> <outputDir>',
+    desc: 'Pull resources through remote filter',
     handler: async argv => {
       pull(argv.timerange, argv.url, argv.filter, argv.profile, argv.parallelism, argv.outputDir)
     },

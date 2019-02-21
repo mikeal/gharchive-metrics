@@ -25,13 +25,14 @@ const fallback = (file, keys) => {
     transform (obj, encoding, callback) {
       let _obj = {}
       keys.forEach(key => {
+        let __obj = obj
         let _key = key.split('.')
         let k
         while (_key.length > 0) {
           k = _key.shift()
-          obj = obj[k]
+          __obj = __obj[k]
         }
-        _obj[k] = obj
+        _obj[k] = __obj
       })
       if (Object.keys(_obj).length) {
         callback(null, _obj)
@@ -99,6 +100,7 @@ exports.handler = async function http (req) {
   keys.push('repo.name')
   keys.push('created_at')
   keys = Array.from(new Set(keys))
+  let _keys = keys
   keys = keys.map(k => 's.' + k).join(', ')
   let sql = `SELECT ${keys} from S3Object s`
   let query = await s3.query(sql, `gharchive/${file}`)
@@ -107,7 +109,7 @@ exports.handler = async function http (req) {
     return ret
   } catch (e) {
     console.error(e)
-    let source = fallback(file, keys)
+    let source = fallback(file, _keys)
     return compose(source, filter, file, repos, orgs)
   }
 }
