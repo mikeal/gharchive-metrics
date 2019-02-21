@@ -5,5 +5,5 @@ ghmetrics
 get /
 get /fetch
 get /filter
-get /filter-day
-get /filter-month
+get /filterDay
+get /filterMonth

@@ -1,9 +1,13 @@
+#!/bin/sh 
+":" //# comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
+const bent = require('bent')
 const pkg = require('./package.json')
 const log = require('single-line-log').stdout
 const mkfilter = require('./lib/mkfilter')
 const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
 const pull = require('./lib/pull')
+const pullDay = require('./lib/pullDay')
 const range = mkQuery.range
 
 const prime = async argv => {
@@ -51,6 +55,16 @@ const queryOptions = yargs => {
   timerangeOptions(yargs)
 }
 
+const pullOptions = yargs => {
+  yargs.positional('filter', {
+    desc: 'Hash of of the filter options, created with mkfilter',
+    required: true
+  })
+  yargs.positional('outputDir', {
+    desc: 'Directory to write filtered activity.',
+    required: true
+  })
+}
 require('yargs') // eslint-disable-line
   .command({
     command: 'prime [timerange]',
@@ -115,13 +129,48 @@ require('yargs') // eslint-disable-line
     },
     builder: yargs => {
       queryOptions(yargs)
-      yargs.positional('filter', {
-        desc: 'Hash of of the filter options, created with mkfilter',
-        required: true
+      pullOptions(yargs)
+    }
+  })
+  .command({
+    command: 'filter-day <day> <filter>',
+    desc: 'Pull resources through remote filter for a specific day',
+    handler: async argv => {
+      let get = bent(argv.url, 'json')
+      let ret = await get(`/filterDay?day=${argv.day}&filter=${argv.filter}`)
+      console.log(ret)
+    },
+    builder: yargs => {
+      yargs.option('url', {
+        desc: 'Cache service URL',
+        default: pkg.productionURL
       })
-      yargs.positional('outputDir', {
-        desc: 'Directory to write filtered activity.',
-        required: true
+      yargs.positional('day', {
+        desc: 'Day to query in format "2018-01-01"'
+      })
+      yargs.positional('filter', {
+        desc: 'Hash of of the filter options, created with mkfilter'
+      })
+    }
+  })
+  .command({
+    command: 'filter-month <month> <filter>',
+    desc: 'Pull resources through remote filter for a specific month',
+    handler: async argv => {
+      let get = bent(argv.url, 'json')
+      let ret = await get(`/filterMonth?month=${argv.month}&filter=${argv.filter}`)
+      console.log(ret)
+    },
+    builder: yargs => {
+      yargs.option('url', {
+        desc: 'Cache service URL',
+        default: pkg.productionURL
+      })
+      yargs.positional('month', {
+        desc: 'Month to query in format "2018-01"'
+      })
+      yargs.positional('filter', {
+        desc: 'Hash of of the filter options, created with mkfilter'
       })
     }
   })
