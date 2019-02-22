@@ -1,41 +1,60 @@
 const path = require('path')
 const { Worker } = require('worker_threads')
 
-function runService(workerData) {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(path.join(__dirname, 'download-service.js'), { workerData });
-    worker.on('message', resolve);
-    worker.on('error', reject);
-    worker.on('exit', (code) => {
-      if (code !== 0)
-        reject(new Error(`Worker stopped with exit code ${code}`));
-    })
+function runService() {
+  const worker = new Worker(path.join(__dirname, 'download-service.js'));
+  worker.pending = {}
+  worker.on('message', resp => {
+    worker.pending[resp.key](resp)
+    delete worker.pending[resp.key]
   })
+  worker.getKey = opts => {
+    worker.postMessage(opts)
+    return new Promise(resolve => {
+      worker.pending[opts.key] = resp => {
+        resp.service = worker
+        resolve(resp)
+      }
+    })
+  }
+  return worker
 }
 
-module.exports = (profile, key, outputDir) => runService({profile, key, outputDir})
-module.exports.all = async (profile, keys, outputDir, limit=5) => {
-  console.error({keys})
-  process.exit()
+
+exports.all = async (profile, keys, outputDir, limit=100, workers=3) => {
+  const services = []
+  let serviceIndex = 0
+  const _getKey = (opts) => {
+    let ret = services[serviceIndex].getKey(opts)
+    serviceIndex += 1
+    if (serviceIndex === services.length) serviceIndex = 0
+    return ret
+  }
+
   const promises = new Set()
   const results = []
-  const run = () => {
+  const run = (service) => {
     if (!keys.length) return
-    let p = runService({profile, key: keys.shift(), outputDir})
+    let key = keys.shift()
+    let getKey = service ? service.getKey : _getKey
+    let p = getKey({profile, key, outputDir})
     p.then(ret => {
       promises.delete(p)
       results.push(ret)
+      run(ret.service)
     })
     promises.add(p)
   }
   let i = 0
-  while (keys.length && i < limit) {
-    i += 1
-    run() 
+  for (let i = 0; i < workers; i++) {
+    services.push(runService())
+  }
+  for (let i = 0; i < (workers * limit); i++) {
+    run()
   }
   while (promises.size) {
-    await Promise.race(Array.from(promises))
-    run()
+    let info = await Promise.race(Array.from(promises))
+    // console.error(info.filename)
   }
   return results
 }

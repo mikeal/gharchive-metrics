@@ -1,5 +1,5 @@
 const gharchive = require('@architect/shared/gharchive')
-const bent = require('bent')
+const bent = require('@architect/shared/retry')
 
 const pull = async (file, url, filter) => {
   let archive = await gharchive(file, url, 3)
@@ -9,6 +9,7 @@ const pull = async (file, url, filter) => {
 }
 
 const run = async (day, url, filter) => {
+  console.error({day})
   let i = 0
   let promises = []
   while (i < 24) {
@@ -31,9 +32,14 @@ const geturl = req => {
 exports.handler = async function http (req) {
   let { day, filter } = req.query
   let url = geturl(req)
-  let ret = await run(day, url, filter)
-  return {
-    type: 'application/json; charset=utf8',
-    body: JSON.stringify(ret)
+  try {
+    let ret = await run(day, url, filter)
+    return {
+      type: 'application/json; charset=utf8',
+      body: JSON.stringify(ret)
+    }
+  } catch (e) {
+    console.error({fail: day})
+    throw e
   }
 }

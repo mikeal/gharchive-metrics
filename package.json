@@ -14,7 +14,7 @@
   "license": "ISC",
   "productionURL": "https://z2dcrjnbla.execute-api.us-west-2.amazonaws.com/staging",
   "dependencies": {
-    "@architect/architect": "^5.5.3",
+    "@architect/architect": "^5.5.4",
     "aws-config": "^1.2.0",
     "aws-sdk": "^2.393.0",
     "bent": "^5.0.0",

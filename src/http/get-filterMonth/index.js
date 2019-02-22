@@ -1,4 +1,4 @@
-const bent = require('bent')
+const bent = require('@architect/shared/retry')
 
 const oneday = 1000 * 60 * 60 * 24
 

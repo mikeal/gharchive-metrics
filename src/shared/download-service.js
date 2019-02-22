@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const { createGunzip } = require('zlib')
 
-const { workerData, parentPort } = require('worker_threads')
+const { parentPort } = require('worker_threads')
 
 const download = async (opts) => {
   let { profile, key, outputDir } = opts
@@ -17,8 +17,11 @@ const download = async (opts) => {
     let len = 0
     down.on('data', chunk => len += chunk.length)
     down.on('error', reject)
-    down.on('end', () => resolve({ len, filename }))
+    down.on('end', () => resolve({ len, filename, key: opts.key }))
   })
 }
 
-download(workerData).then(ret => parentPort.postMessage(ret))
+parentPort.on('message', async opts => {
+  parentPort.postMessage(await download(opts))
+})
+
