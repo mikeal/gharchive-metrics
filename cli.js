@@ -30,17 +30,28 @@ const runFilter = async argv => {
   filter(argv.profile, argv.timerange, argv.url, argv.parallelism, argv.filter)
 }
 
-const timerangeOptions = yargs => {
-  yargs.option('parallelism', {
-    desc: 'Max number of concurrent requests',
-    default: 20
-  })
+const urlOption = yargs => {
   yargs.option('url', {
     desc: 'Cache service URL',
     default: pkg.productionURL
   })
 }
-
+const parallelismOption = yargs => {
+  yargs.option('parallelism', {
+    desc: 'Max number of concurrent requests',
+    default: 20
+  })
+}
+const timerangeOptions = yargs => {
+  paralleismOption(yargs) 
+  urlOption(yargs)
+}
+const profileOption = yargs => {
+  yargs.positional('profile', {
+    required: true,
+    desc: 'AWS profile name'
+  })
+}
 const queryOptions = yargs => {
   yargs.positional('timerange', {
     desc: 'Timerange in format: 2019-01-01:2019-01-02',
@@ -50,23 +61,45 @@ const queryOptions = yargs => {
     desc: 'SQL Query for S3 select',
     required: true
   })
-  yargs.positional('profile', {
-    required: true,
-    desc: 'AWS profile name'
-  })
+  profileOption(yargs) 
   timerangeOptions(yargs)
 }
-
-const pullOptions = yargs => {
+const filterOption = yargs => {
   yargs.positional('filter', {
     desc: 'Hash of of the filter options, created with mkfilter',
     required: true
   })
+}
+const pullOptions = yargs => {
+  filterOption(yargs)
   yargs.positional('outputDir', {
     desc: 'Directory to write filtered activity.',
     required: true
   })
 }
+
+const downloadOptions = yargs => {
+  profileOption(yargs)
+  urlOption(yargs)
+  pullOptions(yargs)
+}
+
+const dayOption = yargs => {
+  yargs.positional('day', {
+    desc: 'Day to query in format "2018-01-01"'
+  })
+}
+const monthOption = yargs => {
+  yargs.positional('month', {
+    desc: 'Month to query in format "2018-01"'
+  })
+}
+const yearOption = yargs => {
+  yargs.positional('year', {
+    desc: 'Year to query in format "2018"'
+  })
+}
+
 require('yargs') // eslint-disable-line
   .command({
     command: 'prime [timerange]',
@@ -111,10 +144,7 @@ require('yargs') // eslint-disable-line
       yargs.option('repos', {
         desc: 'Comma delimited list of repos to filter on'
       })
-      yargs.positional('profile', {
-        required: true,
-        desc: 'AWS profile name'
-      })
+      profileOption(yargs)
     },
     desc: 'Creates and stores CBOR node for filter parameters',
     handler: async argv => {
@@ -143,16 +173,9 @@ require('yargs') // eslint-disable-line
       console.log(ret)
     },
     builder: yargs => {
-      yargs.option('url', {
-        desc: 'Cache service URL',
-        default: pkg.productionURL
-      })
-      yargs.positional('day', {
-        desc: 'Day to query in format "2018-01-01"'
-      })
-      yargs.positional('filter', {
-        desc: 'Hash of of the filter options, created with mkfilter'
-      })
+      urlOption(yargs)
+      filterOption(yargs)
+      dayOption(yargs)
     }
   })
   .command({
@@ -164,40 +187,28 @@ require('yargs') // eslint-disable-line
       console.log(ret)
     },
     builder: yargs => {
-      yargs.option('url', {
-        desc: 'Cache service URL',
-        default: pkg.productionURL
-      })
-      yargs.positional('month', {
-        desc: 'Month to query in format "2018-01"'
-      })
-      yargs.positional('filter', {
-        desc: 'Hash of of the filter options, created with mkfilter'
-      })
+      urlOption(yargs)
+      monthOption(yargs)
+      filterOption(yargs)
     }
   })
   .command({
     command: 'pull-day <day> <filter> <profile> <outputDir>',
     desc: 'Download resources through remote filter for a specific day',
-    handler: async argv => {
-      mkdirp.sync(argv.outputDir)
-      let get = bent(argv.url, 'json')
-      let ret = await get(`/filterDay?day=${argv.day}&filter=${argv.filter}`)
-      console.log(await download.all(argv.profile, ret, argv.outputDir))
-    },
+    handler: pull.day,
     builder: yargs => {
-      yargs.option('url', {
-        desc: 'Cache service URL',
-        default: pkg.productionURL
-      })
-      yargs.positional('day', {
-        desc: 'Day to query in format "2018-01-01"'
-      })
-      yargs.positional('profile', {
-        required: true,
-        desc: 'AWS profile name'
-      })
-      pullOptions(yargs)
+      dayOption(yargs)
+      downloadOptions(yargs)
     }
   })
+  .command({
+    command: 'pull-month <month> <filter> <profile> <outputDir>',
+    desc: 'Download resources through remote filter for a specific month',
+    handler: pull.month,
+    builder: yargs => {
+      monthOption(yargs)
+      downloadOptions(yargs)
+    }
+  })
+
   .argv

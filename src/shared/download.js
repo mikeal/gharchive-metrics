@@ -14,11 +14,29 @@ function runService(workerData) {
 }
 
 module.exports = (profile, key, outputDir) => runService({profile, key, outputDir})
-module.exports.all = (profile, keys, outputDir) => {
-  const promises = []
-  while (keys.length) {
-    promises.push(runService({profile, key: keys.shift(), outputDir}))
+module.exports.all = async (profile, keys, outputDir, limit=5) => {
+  console.error({keys})
+  process.exit()
+  const promises = new Set()
+  const results = []
+  const run = () => {
+    if (!keys.length) return
+    let p = runService({profile, key: keys.shift(), outputDir})
+    p.then(ret => {
+      promises.delete(p)
+      results.push(ret)
+    })
+    promises.add(p)
   }
-  return Promise.all(promises)
+  let i = 0
+  while (keys.length && i < limit) {
+    i += 1
+    run() 
+  }
+  while (promises.size) {
+    await Promise.race(Array.from(promises))
+    run()
+  }
+  return results
 }
 
