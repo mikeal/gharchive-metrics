@@ -1,6 +1,7 @@
 #!/bin/sh 
 ":" //# comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
 const bent = require('bent')
+const mkdirp = require('mkdirp')
 const pkg = require('./package.json')
 const log = require('single-line-log').stdout
 const mkfilter = require('./lib/mkfilter')
@@ -8,6 +9,7 @@ const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
 const pull = require('./lib/pull')
 const pullDay = require('./lib/pullDay')
+const download = require('./src/shared/download')
 const range = mkQuery.range
 
 const prime = async argv => {
@@ -172,6 +174,30 @@ require('yargs') // eslint-disable-line
       yargs.positional('filter', {
         desc: 'Hash of of the filter options, created with mkfilter'
       })
+    }
+  })
+  .command({
+    command: 'pull-day <day> <filter> <profile> <outputDir>',
+    desc: 'Download resources through remote filter for a specific day',
+    handler: async argv => {
+      mkdirp.sync(argv.outputDir)
+      let get = bent(argv.url, 'json')
+      let ret = await get(`/filterDay?day=${argv.day}&filter=${argv.filter}`)
+      console.log(await download.all(argv.profile, ret, argv.outputDir))
+    },
+    builder: yargs => {
+      yargs.option('url', {
+        desc: 'Cache service URL',
+        default: pkg.productionURL
+      })
+      yargs.positional('day', {
+        desc: 'Day to query in format "2018-01-01"'
+      })
+      yargs.positional('profile', {
+        required: true,
+        desc: 'AWS profile name'
+      })
+      pullOptions(yargs)
     }
   })
   .argv

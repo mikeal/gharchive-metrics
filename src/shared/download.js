@@ -1,7 +1,4 @@
 const path = require('path')
-
-// index.js
-// run with node --experimental-worker index.js on Node.js 10.x
 const { Worker } = require('worker_threads')
 
 function runService(workerData) {
@@ -17,4 +14,11 @@ function runService(workerData) {
 }
 
 module.exports = (profile, key, outputDir) => runService({profile, key, outputDir})
+module.exports.all = (profile, keys, outputDir) => {
+  const promises = []
+  while (keys.length) {
+    promises.push(runService({profile, key: keys.shift(), outputDir}))
+  }
+  return Promise.all(promises)
+}
 
