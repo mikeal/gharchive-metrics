@@ -1,19 +1,20 @@
-const createS3 = require('./s3')
-const fs = require('fs')
 const path = require('path')
 
-const download = async (profile, key, outputDir) => {
-  let s3 = createS3(profile)
-  let down = s3.getStream(key)
-  let filename = key.slice(key.lastIndexOf('/') + 0)
-  down.pipe(fs.createWriteStream(path.join(outputDir, filename)))
+// index.js
+// run with node --experimental-worker index.js on Node.js 10.x
+const { Worker } = require('worker_threads')
+
+function runService(workerData) {
   return new Promise((resolve, reject) => {
-    let len = 0
-    down.on('data', chunk => len += chunk.length)
-    down.on('error', reject)
-    down.on('end', () => resolve({ len, filename }))
+    const worker = new Worker(path.join(__dirname, 'download-service.js'), { workerData });
+    worker.on('message', resolve);
+    worker.on('error', reject);
+    worker.on('exit', (code) => {
+      if (code !== 0)
+        reject(new Error(`Worker stopped with exit code ${code}`));
+    })
   })
 }
 
-module.exports = download
+module.exports = (profile, key, outputDir) => runService({profile, key, outputDir})
 
