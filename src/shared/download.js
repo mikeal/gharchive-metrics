@@ -22,7 +22,7 @@ function runService() {
 
 
 exports.all = async (profile, keys, outputDir, limit=100, workers=3) => {
-  const services = []
+  const services = Array.isArray(workers) ? workers : []
   let serviceIndex = 0
   const _getKey = (opts) => {
     let ret = services[serviceIndex].getKey(opts)
@@ -45,9 +45,11 @@ exports.all = async (profile, keys, outputDir, limit=100, workers=3) => {
     })
     promises.add(p)
   }
-  let i = 0
-  for (let i = 0; i < workers; i++) {
-    services.push(runService())
+  if (!services.length) {
+    let i = 0
+    for (let i = 0; i < workers; i++) {
+      services.push(runService())
+    }
   }
   for (let i = 0; i < (workers * limit); i++) {
     run()
@@ -56,6 +58,7 @@ exports.all = async (profile, keys, outputDir, limit=100, workers=3) => {
     let info = await Promise.race(Array.from(promises))
     // console.error(info.filename)
   }
+  results.services = services
   return results
 }
 

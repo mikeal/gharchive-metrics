@@ -210,5 +210,13 @@ require('yargs') // eslint-disable-line
       downloadOptions(yargs)
     }
   })
-
+  .command({
+    command: 'pull-year <year> <filter> <profile> <outputDir>',
+    desc: 'Download resources through remote filter for a specific year',
+    handler: pull.year,
+    builder: yargs => {
+      yearOption(yargs)
+      downloadOptions(yargs)
+    }
+  })
   .argv
