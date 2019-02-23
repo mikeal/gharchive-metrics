@@ -20,8 +20,8 @@ function runService() {
   return worker
 }
 
-
-exports.all = async (profile, keys, outputDir, limit=100, workers=3) => {
+exports.all = async (profile, keys, outputDir, limit=50, workers=3) => {
+  keys = keys.filter(k => k) // remove null keys from missing hours
   const services = Array.isArray(workers) ? workers : []
   let serviceIndex = 0
   const _getKey = (opts) => {
