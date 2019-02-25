@@ -21,6 +21,8 @@
     "dag-cbor-sync": "^0.6.0",
     "jsonstream2": "^1.1.2",
     "mergeiterator": "^1.1.8",
+    "mkcsv": "^1.0.1",
+    "reed-richards": "^1.4.0",
     "s3-download-stream": "^1.1.1",
     "s3-stream-upload": "^2.0.2",
     "single-line-log": "^1.1.2",
