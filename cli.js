@@ -1,15 +1,12 @@
-#!/bin/sh 
-":" //# comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
+#!/bin/sh
+':' // # comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
 const bent = require('bent')
-const mkdirp = require('mkdirp')
 const pkg = require('./package.json')
 const log = require('single-line-log').stdout
 const mkfilter = require('./lib/mkfilter')
 const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
 const pull = require('./lib/pull')
-const pullDay = require('./lib/pullDay')
-const download = require('./src/shared/download')
 const range = mkQuery.range
 
 const prime = async argv => {
@@ -43,7 +40,7 @@ const parallelismOption = yargs => {
   })
 }
 const timerangeOptions = yargs => {
-  paralleismOption(yargs) 
+  parallelismOption(yargs)
   urlOption(yargs)
 }
 const profileOption = yargs => {
@@ -61,7 +58,7 @@ const queryOptions = yargs => {
     desc: 'SQL Query for S3 select',
     required: true
   })
-  profileOption(yargs) 
+  profileOption(yargs)
   timerangeOptions(yargs)
 }
 const filterOption = yargs => {
@@ -160,6 +157,7 @@ require('yargs') // eslint-disable-line
       pull(argv.timerange, argv.url, argv.filter, argv.profile, argv.parallelism, argv.outputDir)
     },
     builder: yargs => {
+      parallelismOption(yargs)
       queryOptions(yargs)
       pullOptions(yargs)
     }
