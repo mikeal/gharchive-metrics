@@ -1,7 +1,8 @@
-const gharchive = require('./lib/gharchive')
-
-const run = async () => {
-  let result = await gharchive('2019-01-01-15.json.gz')
-  console.log({ result })
+module.exports = {
+  gharchive: require('./lib/gharchive'),
+  filter: require('./lib/filter'),
+  metrics: require('./lib/metrics'),
+  mkfilter: require('./lib/mkfilter'),
+  pull: require('./lib/pull'),
+  query: require('./lib/query')
 }
-run()
