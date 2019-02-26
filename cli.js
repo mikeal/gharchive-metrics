@@ -1,5 +1,5 @@
 #!/bin/sh
-':' // # comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
+':' //# comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
 const bent = require('bent')
 const pkg = require('./package.json')
 const log = require('single-line-log').stdout
