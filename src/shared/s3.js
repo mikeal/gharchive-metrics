@@ -31,7 +31,7 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
       })
     })
   }
-  
+
   const getStream = key => {
     var config = {
       client: s3,
@@ -128,13 +128,3 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
   return exports
 }
 
- /* 
-
-;(async () => {
-  let file = '2018-01-01-15.json.gz'
-  let x = await module.exports().query('SELECT s.type from S3Object s', `gharchive/${file}`)
-  console.log('got x')
-  for await (let chunk of x) { console.log(chunk) }
-})()
-
-*/

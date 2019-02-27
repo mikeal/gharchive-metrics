@@ -10,14 +10,15 @@ const pull = async (day, url, filter) => {
 const flatten = arrays => [].concat.apply([], arrays)
 
 const run = async (month, url, filter) => {
-  console.error({ month })
   let promises = []
   let ts = new Date(month + '-01')
   month = ts.getMonth()
   while (ts.getMonth() === month) {
     let day = ts.toISOString().slice(0, 10)
     console.error({ day })
-    promises.push(pull(day, url, filter))
+    let p = pull(day, url, filter)
+    promises.push(p)
+    p.then(() => console.log({ finish: day }))
     ts = new Date(ts.getTime() + oneday)
   }
   let results = await Promise.all(promises)

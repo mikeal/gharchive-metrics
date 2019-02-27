@@ -5,6 +5,7 @@ ghmetrics
 get /
 get /fetch
 get /filter
-get /filterManually
+get /pluck
+get /pluckFallback
 get /filterDay
 get /filterMonth

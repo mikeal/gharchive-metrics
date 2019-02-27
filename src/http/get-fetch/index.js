@@ -6,16 +6,16 @@ let gharchive = require('./lib/gharchive')
 
 let json = obj => JSON.stringify(obj, null, 2)
 
-exports.handler = async function http(req) {
+exports.handler = async function http (req) {
   let type = 'text/html; charset=utf8'
   let file = req.query.file
   if (!file) {
-    return {type, body: '<h1>Wrong params :(</h1>'}
+    return { type, body: '<h1>Wrong params :(</h1>' }
   }
   let stored = await gharchive(file)
   return {
     type: 'application/json',
-    body: json({file, stored})
+    body: json({ file, stored })
   }
 }
 

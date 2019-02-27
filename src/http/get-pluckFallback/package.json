@@ -1,0 +1,8 @@
+{
+  "name": "ghmetrics-get-pluckFallback",
+  "dependencies": {
+    "@architect/data": "^2.0.14",
+    "@architect/functions": "^2.0.12",
+    "jsonstream2": "^2.0.1"
+  }
+}

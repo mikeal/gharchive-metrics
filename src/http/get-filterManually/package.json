@@ -1,9 +1,0 @@
-{
-  "name": "ghmetrics-get-filterManually",
-  "dependencies": {
-    "@architect/data": "^2.0.14",
-    "@architect/functions": "^2.0.11",
-    "dag-cbor-sync": "^0.6.0",
-    "jsonstream2": "^2.0.1"
-  }
-}

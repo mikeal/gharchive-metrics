@@ -3,6 +3,7 @@
   "dependencies": {
     "@architect/data": "^2.0.14",
     "@architect/functions": "^2.0.7",
+    "bent": "^1.3.0",
     "dag-cbor-sync": "^0.6.0",
     "jsonstream2": "^2.0.1"
   }
