@@ -1,0 +1,6 @@
+{
+  "policies": [
+    "arn:aws:iam::aws:policy/AWSLambdaExecute",
+    "arn:aws:iam::aws:policy/AWSLambdaBasicExecutionRole"
+  ]
+}

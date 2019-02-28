@@ -5,6 +5,11 @@ const { createGunzip } = require('zlib')
 
 const { Transform } = require('stream')
 
+const streamWait = stream => new Promise((resolve, reject) => {
+  stream.on('finish', resolve)
+  stream.on('error', reject)
+})
+
 const fallback = (file, keys) => {
   let _transform = new Transform({
     writableObjectMode: true,
@@ -22,7 +27,7 @@ const fallback = (file, keys) => {
         _obj[k] = __obj
       })
       if (Object.keys(_obj).length) {
-        callback(null, _obj)
+        callback(null, Buffer.from(JSON.stringify(_obj) + '\n'))
       } else {
         callback(null)
       }
@@ -34,13 +39,6 @@ const fallback = (file, keys) => {
     .pipe(_transform)
 }
 
-const collect = stream => new Promise((resolve, reject) => {
-  let objs = []
-  stream.on('data', obj => objs.push(obj))
-  stream.on('end', resolve(objs))
-  stream.on('error', reject)
-})
-
 exports.handler = async function http (req) {
   let { file, keys } = req.query
   keys = keys.split(',')
@@ -48,9 +46,11 @@ exports.handler = async function http (req) {
   keys.push('created_at')
 
   let cachekey = `cache/pluck/${file}-${encodeURIComponent(keys.sort().join(','))}.json`
-  let query = fallback(file, keys)
-  let objs = await collect(query)
-  await s3.putObject(cachekey, Buffer.from(JSON.stringify(objs)))
+  let stream = fallback(file, keys)
+  let upload = s3.upload(cachekey)
+  stream.pipe(upload)
+
+  await streamWait(upload)
   return {
     body: JSON.stringify({ cache: cachekey }),
     type: 'application/json; charset=utf8'

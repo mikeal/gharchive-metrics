@@ -1,27 +1,27 @@
 const createS3 = require('@architect/shared/s3')
 const s3 = createS3()
 const cbor = require('dag-cbor-sync')(655360)
-const bent = require('bent')
+const jsonstream = require('jsonstream2')
+const { Transform } = require('stream')
+const lambda = require('@architect/shared/lambda')()
 
-const pluck = async (file, url, keys) => {
-  let get = bent(url, 'json')
-  console.log({ file, get: 'pluck' })
+const filterTransform = _f => new Transform({
+  transform (obj, encoding, callback) {
+    if (_f(obj)) callback(null, Buffer.from(JSON.stringify(obj) + '\n'))
+    else callback(null)
+  },
+  objectMode: true
+})
+
+const pluck = async (file, keys) => {
   let resp
   try {
-    resp = await get(`/pluck?file=${file}&keys=${keys.join(',')}`)
+    resp = await lambda('pluck', { file, keys: keys.join(',') })
   } catch (e) {
     console.error('FALLBACK')
-    resp = await get(`/pluckFallback?file=${file}&keys=${keys.join(',')}`)
+    resp = await lambda('pluckFallback', { file, keys: keys.join(',') })
   }
-  return s3.getObject(resp.cache)
-}
-
-const geturl = req => {
-  let proto = req.headers['X-Forwarded-Proto']
-  let host = req.headers.Host
-  let env = process.env.NODE_ENV
-  let url = `${proto}://${host}/${env}`
-  return url
+  return s3.getStream(resp.cache)
 }
 
 const createFilter = (repos, orgs) => {
@@ -39,24 +39,29 @@ const createFilter = (repos, orgs) => {
   return _f
 }
 
+const streamWait = stream => new Promise((resolve, reject) => {
+  stream.on('finish', resolve)
+  stream.on('error', reject)
+})
+
 exports.handler = async function http (req) {
   let { filter, file } = req.query
   console.error({ file })
-  let url = geturl(req)
   let { orgs, repos, keys } = cbor.deserialize(await s3.getObject(`blocks/${filter}`))
 
   let cachekey = `cache/pluck/${file}-${encodeURIComponent(keys.sort().join(','))}.json`
-  let buffer
+  let plucked
   if (!await s3.hasObject(cachekey)) {
-    buffer = await pluck(file, url, keys)
+    plucked = await pluck(file, keys)
   } else {
-    buffer = await s3.getObject(cachekey)
+    plucked = await s3.getStream(cachekey)
   }
-  let objs = JSON.parse(buffer.toString())
-  let _filter = createFilter(repos, orgs)
-  let data = Buffer.from(JSON.stringify(objs.filter(_filter)))
   let cache = `cache/${filter}/${file.slice(0, file.lastIndexOf('.gz'))}`
-  await s3.putObject(cache, data)
+  let upload = s3.upload(cache)
+  let _f = createFilter(repos, orgs)
+  let stream = plucked.pipe(jsonstream.parse()).pipe(filterTransform(_f))
+  stream.pipe(upload)
+  await streamWait(upload)
   return {
     type: 'application/json',
     body: JSON.stringify({

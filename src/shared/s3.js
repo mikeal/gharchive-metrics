@@ -25,9 +25,9 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
 
   const hasObject = key => {
     return new Promise((resolve, reject) => {
-      s3.headObject({Bucket, Key: key}, function (err, bool) {
+      s3.headObject({ Bucket, Key: key }, function (err, bool) {
         if (err) return resolve(false)
-        resolve(bool ? {size: parseInt(this.httpResponse.headers['content-length'])} : bool)
+        resolve(bool ? { size: parseInt(this.httpResponse.headers['content-length']) } : bool)
       })
     })
   }
@@ -73,7 +73,6 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
     return putObject(`blocks/${block.cid.toBaseEncodedString()}`, block.data)
   }
 
-
   const query = (expression, key) => {
     const params = {
       Bucket,
@@ -95,14 +94,14 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
       s3.selectObjectContent(params, (err, data) => {
         if (err) return reject(err)
         let _transport = data.Payload
-        .pipe(new Transform({
-          transform(chunk, encoding, callback) {
-            callback(null, chunk.Records ? chunk.Records.Payload : undefined)
-          },
-          objectMode: true
-        }))
-        let ret = new PassThrough({objectMode: true})
-        
+          .pipe(new Transform({
+            transform (chunk, encoding, callback) {
+              callback(null, chunk.Records ? chunk.Records.Payload : undefined)
+            },
+            objectMode: true
+          }))
+        let ret = new PassThrough({ objectMode: true })
+
         for (let { node } of recursive(data)) {
           if (node && typeof node.on === 'function') {
             node.on('error', err => ret.emit('error'))
@@ -124,7 +123,6 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
     waitForStream,
     query
   }
-  
+
   return exports
 }
-

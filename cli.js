@@ -1,12 +1,12 @@
 #!/bin/sh
 ':' //# comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
-const bent = require('bent')
 const pkg = require('./package.json')
 const log = require('single-line-log').stdout
 const mkfilter = require('./lib/mkfilter')
 const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
 const pull = require('./lib/pull')
+const createLambda = require('./src/shared/lambda')
 const range = mkQuery.range
 
 const prime = async argv => {
@@ -44,7 +44,8 @@ const timerangeOptions = yargs => {
   urlOption(yargs)
 }
 const profileOption = yargs => {
-  yargs.positional('profile', {
+  yargs.option('profile', {
+    default: process.env.AWS_PROFILE,
     required: true,
     desc: 'AWS profile name'
   })
@@ -111,7 +112,7 @@ require('yargs') // eslint-disable-line
     handler: prime
   })
   .command({
-    command: 'query <timerange> <sql> <profile>',
+    command: 'query <timerange> <sql>',
     builder: yargs => {
       queryOptions(yargs)
     },
@@ -119,7 +120,7 @@ require('yargs') // eslint-disable-line
     handler: runQuery
   })
   .command({
-    command: 'filter <timerange> <profile> <filter>',
+    command: 'filter <timerange> <filter>',
     builder: yargs => {
       queryOptions(yargs)
       yargs.positional('filter', {
@@ -130,7 +131,7 @@ require('yargs') // eslint-disable-line
     handler: argv => runFilter(argv)
   })
   .command({
-    command: 'mkfilter <profile>',
+    command: 'mkfilter',
     builder: yargs => {
       yargs.option('keys', {
         desc: 'Command delimited list of keys to include in filtered object'
@@ -151,7 +152,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull <timerange> <profile> <filter> <outputDir>',
+    command: 'pull <timerange> <filter> <outputDir>',
     desc: 'Pull resources through remote filter',
     handler: async argv => {
       pull(argv.timerange, argv.url, argv.filter, argv.profile, argv.parallelism, argv.outputDir)
@@ -166,12 +167,11 @@ require('yargs') // eslint-disable-line
     command: 'filter-day <day> <filter>',
     desc: 'Pull resources through remote filter for a specific day',
     handler: async argv => {
-      let get = bent(argv.url, 'json')
-      let ret = await get(`/filterDay?day=${argv.day}&filter=${argv.filter}`)
+      let lambda = createLambda(argv.profile)
+      let ret = await lambda('filterDay', { day: argv.day, filter: argv.filter })
       console.log(ret)
     },
     builder: yargs => {
-      urlOption(yargs)
       filterOption(yargs)
       dayOption(yargs)
     }
@@ -180,8 +180,8 @@ require('yargs') // eslint-disable-line
     command: 'filter-month <month> <filter>',
     desc: 'Pull resources through remote filter for a specific month',
     handler: async argv => {
-      let get = bent(argv.url, 'json')
-      let ret = await get(`/filterMonth?month=${argv.month}&filter=${argv.filter}`)
+      let lambda = createLambda(argv.profile)
+      let ret = await lambda('filterMonth', { month: argv.month, filter: argv.filter })
       console.log(ret)
     },
     builder: yargs => {
@@ -191,7 +191,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull-day <day> <filter> <profile> <outputDir>',
+    command: 'pull-day <day> <filter> <outputDir>',
     desc: 'Download resources through remote filter for a specific day',
     handler: pull.day,
     builder: yargs => {
@@ -200,7 +200,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull-month <month> <filter> <profile> <outputDir>',
+    command: 'pull-month <month> <filter> <outputDir>',
     desc: 'Download resources through remote filter for a specific month',
     handler: pull.month,
     builder: yargs => {
@@ -209,7 +209,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull-year <year> <filter> <profile> <outputDir>',
+    command: 'pull-year <year> <filter> <outputDir>',
     desc: 'Download resources through remote filter for a specific year',
     handler: pull.year,
     builder: yargs => {

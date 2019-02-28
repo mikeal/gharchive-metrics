@@ -2,7 +2,6 @@
   "name": "ghmetrics-get-filterMonth",
   "dependencies": {
     "@architect/data": "^2.0.14",
-    "@architect/functions": "^2.0.8",
-    "bent": "^1.3.0"
+    "@architect/functions": "^2.0.8"
   }
 }

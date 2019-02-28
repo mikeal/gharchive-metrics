@@ -1,6 +1,8 @@
 @app
 ghmetrics
 
+@ws
+
 @http
 get /
 get /fetch

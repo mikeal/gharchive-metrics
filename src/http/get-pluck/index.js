@@ -1,9 +1,15 @@
 const s3 = require('@architect/shared/s3')()
+const { Transform } = require('stream')
 
-const collect = stream => new Promise((resolve, reject) => {
-  let objs = []
-  stream.on('data', obj => objs.push(obj))
-  stream.on('end', () => resolve(objs))
+const stringify = () => new Transform({
+  transform (obj, encoding, callback) {
+    callback(null, Buffer.from(JSON.stringify(obj) + '\n'))
+  },
+  objectMode: true
+})
+
+const streamWait = stream => new Promise((resolve, reject) => {
+  stream.on('finish', resolve)
   stream.on('error', reject)
 })
 
@@ -18,8 +24,10 @@ exports.handler = async function http (req) {
   let sql = `SELECT ${keys} from S3Object s`
   let query = await s3.query(sql, `gharchive/${file}`)
 
-  let objs = await collect(query)
-  await s3.putObject(cachekey, Buffer.from(JSON.stringify(objs)))
+  let stream = query.pipe(stringify())
+  let upload = s3.upload(cachekey)
+  stream.pipe(upload)
+  await streamWait(upload)
   return {
     body: JSON.stringify({ cache: cachekey }),
     type: 'application/json; charset=utf8'

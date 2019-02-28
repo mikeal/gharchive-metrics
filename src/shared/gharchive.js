@@ -1,17 +1,15 @@
-const bent = require('bent')
+const lambda = require('./lambda')()
 
-const gharchive = async (file, url, retry=0, log=console.log) => {
-  let get = bent(url + '/fetch', 'json')
+const gharchive = async (file, retry = 0, log = console.log) => {
   var stored
   try {
-    var { stored } = await get(`?file=${file}`)
+    var { stored } = await lambda('fetch', { file })
   } catch (e) {
     log(`Retrying ${file}`)
     if (retry > 3) throw e
-    return gharchive(file, url, retry+1, log)
+    return gharchive(file, retry + 1, log)
   }
   return stored
 }
 
 module.exports = gharchive
-

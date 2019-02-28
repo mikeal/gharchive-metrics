@@ -11,16 +11,15 @@ const download = async opts => {
   return { len: buffer.length, key: opts.key }
 }
 
-exports.all = async (profile, keys, outputDir, limit=1, workers=1) => {
+exports.all = async (profile, keys, outputDir, limit = 1, workers = 1) => {
   let count = 0
   let ret = { length: keys.length }
 
   while (keys.length) {
     let key = keys.shift()
-    let { len } = await download({profile, key, outputDir})
+    let { len } = await download({ profile, key, outputDir })
     count += len
   }
   ret.size = count
   return ret
 }
-
