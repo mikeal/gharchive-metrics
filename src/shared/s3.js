@@ -10,7 +10,7 @@ const recursive = arg => new RecursiveIterator(arg)
 const { promisify } = require('util')
 
 module.exports = (profile, bucketName = 'ipfs-metrics') => {
-  var s3 = new AWS.S3(awsConfig({ profile, sslEnabled: true }))
+  const s3 = new AWS.S3(awsConfig({ profile, sslEnabled: true }))
 
   const Bucket = bucketName
 
@@ -44,16 +44,10 @@ module.exports = (profile, bucketName = 'ipfs-metrics') => {
     return downloader(config)
   }
 
-  const getObject = key => {
-    return new Promise((resolve, reject) => {
-      let stream = getStream(key)
-      let parts = []
-      stream.on('data', chunk => parts.push(chunk))
-      stream.on('error', reject)
-      stream.on('end', () => {
-        resolve(Buffer.concat(parts))
-      })
-    })
+  const getObject = async key => {
+    let params = { Bucket, Key: key }
+    let resp = await s3.getObject(params).promise()
+    return resp.Body
   }
 
   const putObject = (key, data) => {

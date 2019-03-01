@@ -70,9 +70,8 @@ const filterOption = yargs => {
 }
 const pullOptions = yargs => {
   filterOption(yargs)
-  yargs.positional('outputDir', {
-    desc: 'Directory to write filtered activity.',
-    required: true
+  yargs.option('outputFile', {
+    desc: 'File to write filtered activity.'
   })
 }
 
@@ -152,7 +151,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull <timerange> <filter> <outputDir>',
+    command: 'pull <timerange> <filter>',
     desc: 'Pull resources through remote filter',
     handler: async argv => {
       pull(argv.timerange, argv.url, argv.filter, argv.profile, argv.parallelism, argv.outputDir)
@@ -191,7 +190,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull-day <day> <filter> <outputDir>',
+    command: 'pull-day <day> <filter>',
     desc: 'Download resources through remote filter for a specific day',
     handler: pull.day,
     builder: yargs => {
@@ -200,7 +199,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull-month <month> <filter> <outputDir>',
+    command: 'pull-month <month> <filter>',
     desc: 'Download resources through remote filter for a specific month',
     handler: pull.month,
     builder: yargs => {
@@ -209,7 +208,7 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'pull-year <year> <filter> <outputDir>',
+    command: 'pull-year <year> <filter>',
     desc: 'Download resources through remote filter for a specific year',
     handler: pull.year,
     builder: yargs => {
