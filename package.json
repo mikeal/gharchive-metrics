@@ -18,7 +18,7 @@
   "productionURL": "https://z2dcrjnbla.execute-api.us-west-2.amazonaws.com/staging",
   "productionWSS": "wss://42yeg5ty91.execute-api.us-west-2.amazonaws.com/staging",
   "dependencies": {
-    "@architect/architect": "^5.5.5",
+    "@architect/architect": "^5.5.8",
     "aws-config": "^1.2.0",
     "aws-sdk": "^2.393.0",
     "bent": "^5.0.0",
@@ -26,7 +26,7 @@
     "jsonstream2": "^1.1.2",
     "mergeiterator": "^1.1.8",
     "mkcsv": "^1.0.1",
-    "reed-richards": "^1.4.0",
+    "reed-richards": "^2.0.0",
     "s3-download-stream": "^1.1.1",
     "s3-stream-upload": "^2.0.2",
     "single-line-log": "^1.1.2",

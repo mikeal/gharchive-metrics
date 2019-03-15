@@ -1,13 +1,15 @@
-#!/bin/sh
-':' //# comment; exec /usr/bin/env node --experimental-worker "$0" "$@"
+#!/usr/bin/env node
 const pkg = require('./package.json')
 const log = require('single-line-log').stdout
 const mkfilter = require('./lib/mkfilter')
 const filter = require('./lib/filter')
 const mkQuery = require('./lib/query')
 const pull = require('./lib/pull')
+const metrics = require('./lib/metrics')
 const createLambda = require('./src/shared/lambda')
 const range = mkQuery.range
+
+const defaultLimit = 950
 
 const prime = async argv => {
   let reader = range(argv.timerange, argv.url, argv.parallelism, log)
@@ -205,6 +207,10 @@ require('yargs') // eslint-disable-line
     builder: yargs => {
       monthOption(yargs)
       downloadOptions(yargs)
+      yargs.option('filter', {
+        desc: 'Max concurrent Lambda executions.',
+        default: defaultLimit
+      })
     }
   })
   .command({
@@ -214,6 +220,43 @@ require('yargs') // eslint-disable-line
     builder: yargs => {
       yearOption(yargs)
       downloadOptions(yargs)
+      yargs.option('limit', {
+        desc: 'Max concurrent Lambda executions.',
+        default: defaultLimit
+      })
+    }
+  })
+  .command({
+    command: 'pull-years <start> <end> <filter>',
+    desc: 'Download resources through remote filter for a range of years.',
+    handler: pull.years,
+    builder: yargs => {
+      downloadOptions(yargs)
+      yargs.positional('start', {
+        desc: 'First year to pull.'
+      })
+      yargs.positional('end', {
+        desc: 'Last year to pull.'
+      })
+      yargs.option('limit', {
+        desc: 'Max concurrent Lambda executions.',
+        default: defaultLimit
+      })
+    }
+  })
+  .command({
+    command: 'metrics <inputDir> <outputDir',
+    desc: 'Run metrics analysis on input data and output csv files to directory',
+    handler: argv => metrics(argv.inputDir, argv.outputDir),
+    builder: yargs => {
+      yargs.positional('inputDir', {
+        desc: 'Directory of data files',
+        required: true
+      })
+      yargs.positional('outputDir', {
+        desc: 'Directory to write csv files',
+        required: true
+      })
     }
   })
   .argv

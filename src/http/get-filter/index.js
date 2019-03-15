@@ -4,6 +4,9 @@ const cbor = require('dag-cbor-sync')(655360)
 const jsonstream = require('jsonstream2')
 const { Transform } = require('stream')
 const lambda = require('@architect/shared/lambda')()
+const crypto = require('crypto')
+
+const hash = str => crypto.createHash('sha256').update(str).digest('hex')
 
 const filterTransform = _f => new Transform({
   transform (obj, encoding, callback) {
@@ -18,7 +21,6 @@ const pluck = async (file, keys) => {
   try {
     resp = await lambda('pluck', { file, keys: keys.join(',') })
   } catch (e) {
-    console.error('FALLBACK')
     resp = await lambda('pluckFallback', { file, keys: keys.join(',') })
   }
   return s3.getStream(resp.cache)
@@ -46,10 +48,11 @@ const streamWait = stream => new Promise((resolve, reject) => {
 
 exports.handler = async function http (req) {
   let { filter, file } = req.query
-  console.error({ file })
   let { orgs, repos, keys } = cbor.deserialize(await s3.getObject(`blocks/${filter}`))
+  if (!keys) keys = []
+  keys = keys.filter(k => k)
 
-  let cachekey = `cache/pluck/${file}-${encodeURIComponent(keys.sort().join(','))}.json`
+  let cachekey = `cache/pluck/${hash(file + keys.sort().join(','))}.json`
   let plucked
   if (!await s3.hasObject(cachekey)) {
     plucked = await pluck(file, keys)
@@ -60,6 +63,7 @@ exports.handler = async function http (req) {
   let upload = s3.upload(cache)
   let _f = createFilter(repos, orgs)
   let stream = plucked.pipe(jsonstream.parse()).pipe(filterTransform(_f))
+  upload.write(Buffer.from('\n'))
   stream.pipe(upload)
   await streamWait(upload)
   return {
