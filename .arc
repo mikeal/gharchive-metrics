@@ -1,6 +1,9 @@
 @app
 ghmetrics
 
+@plugin
+architect/arc-plugin-node-prune
+
 @http
 get /
 get /concat

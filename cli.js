@@ -77,10 +77,17 @@ const pullOptions = yargs => {
   })
 }
 
+const cborOption = yargs => {
+  yargs.option('cborSize', {
+    desc: 'CBOR memory allocation'
+  })
+}
+
 const downloadOptions = yargs => {
   profileOption(yargs)
   urlOption(yargs)
   pullOptions(yargs)
+  cborOption(yargs)
 }
 
 const dayOption = yargs => {
@@ -245,12 +252,12 @@ require('yargs') // eslint-disable-line
     }
   })
   .command({
-    command: 'metrics <inputDir> <outputDir',
+    command: 'metrics <inputFile> <outputDir',
     desc: 'Run metrics analysis on input data and output csv files to directory',
-    handler: argv => metrics(argv.inputDir, argv.outputDir),
+    handler: argv => metrics(argv.inputFile, argv.outputDir),
     builder: yargs => {
-      yargs.positional('inputDir', {
-        desc: 'Directory of data files',
+      yargs.positional('inputFile', {
+        desc: 'JSON file of input data (use pull commands to generate)',
         required: true
       })
       yargs.positional('outputDir', {

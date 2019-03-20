@@ -1,13 +1,13 @@
 const lambda = require('@architect/shared/lambda')()
 const oneday = 1000 * 60 * 60 * 24
 
-const pull = async (day, filter) => {
-  return lambda('filterDay', { day, filter })
+const pull = async (day, filter, cborSize) => {
+  return lambda('filterDay', { day, filter, cborSize })
 }
 
 const flatten = arrays => [].concat.apply([], arrays)
 
-const run = async (month, filter, limit = 940) => {
+const run = async (month, filter, limit = 940, cborSize = undefined) => {
   let ts = new Date(month + '-01')
   let runningCost = 0
   let days = []
@@ -20,7 +20,7 @@ const run = async (month, filter, limit = 940) => {
   }
 
   let _do = day => {
-    let p = pull(day, filter)
+    let p = pull(day, filter, cborSize)
     running.add(p)
     p.then(result => {
       results.push(result)
@@ -41,8 +41,8 @@ const run = async (month, filter, limit = 940) => {
 }
 
 exports.handler = async function http (req) {
-  let { month, filter, limit } = req.query
-  let ret = await run(month, filter, limit)
+  let { month, filter, limit, cborSize } = req.query
+  let ret = await run(month, filter, limit, cborSize)
   return {
     type: 'application/json; charset=utf8',
     body: JSON.stringify(ret)

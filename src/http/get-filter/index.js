@@ -1,6 +1,5 @@
 const createS3 = require('@architect/shared/s3')
 const s3 = createS3()
-const cbor = require('dag-cbor-sync')(655360)
 const jsonstream = require('jsonstream2')
 const { Transform } = require('stream')
 const lambda = require('@architect/shared/lambda')()
@@ -27,12 +26,12 @@ const pluck = async (file, keys) => {
 }
 
 const createFilter = (repos, orgs) => {
+  repos = new Set(repos)
   let _f = r => {
     if (r.name) {
       // has a repo name
-      for (let repo of repos) {
-        if (r.name === repo) return true
-      }
+      if (repos.has(r.name)) return true
+
       for (let org of orgs) {
         if (r.name.startsWith(`${org}/`)) return true
       }
@@ -47,7 +46,10 @@ const streamWait = stream => new Promise((resolve, reject) => {
 })
 
 exports.handler = async function http (req) {
-  let { filter, file } = req.query
+  let { filter, file, cborSize } = req.query
+  cborSize = cborSize || 655360
+  let cbor = require('dag-cbor-sync')(cborSize)
+  console.log({ filter, file, cborSize })
   let { orgs, repos, keys } = cbor.deserialize(await s3.getObject(`blocks/${filter}`))
   if (!keys) keys = []
   keys = keys.filter(k => k)
@@ -71,7 +73,6 @@ exports.handler = async function http (req) {
     body: JSON.stringify({
       cache,
       orgs,
-      repos,
       filter,
       file
     })
